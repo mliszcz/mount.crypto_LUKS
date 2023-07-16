@@ -1,0 +1,62 @@
+#!/bin/sh
+# vim: set ft=sh:
+set -e
+
+if [ "$#" -lt 2 ]
+then
+  # The interface is specified in mount(8) manual, EXTERNAL HELPERS section.
+  echo "usage: $0 spec dir [-sfnv] [-N namespace] [-o options] [-t type.subtype]"
+  exit 1
+fi
+
+device="$1"
+mountpoint="$2"
+shift 2
+
+opt_s=
+opt_f=
+opt_n=
+opt_v=
+opt_N=
+opt_o=
+opt_t=
+options=
+while getopts sfnvN:o:t: name
+do
+  case $name in
+    s|f|n|v) eval "opt_$name='-$name'";;
+    N|t) eval "opt_$name='-$name $OPTARG'";;
+    o) options="$OPTARG";;
+    ?) exit 1
+  esac
+done
+
+mapper="${device//\//_}"
+
+oldifs=$IFS
+IFS=,
+cryptsetup_options=
+for v in $options
+do
+  if [ "$v" != "${v#cryptsetup=}" ]
+  then
+    cryptsetup_options="${v#cryptsetup=}"
+  else
+    opt_o="$opt_o,$v"
+  fi
+done
+IFS=$oldifs
+
+# Strip the leading comma (due to appending to an empty string).
+opt_o="${opt_o#?}"
+
+if [ -n "$opt_o" ]
+then
+  opt_o="-o $opt_o"
+fi
+
+# TODO: Run cryptsetup with changed GID/UID.
+# TODO: Close LUKS container if mount fails.
+# TODO: Configure helper in /etc/mtab for umount.
+cryptsetup luksOpen "$device" "$mapper" $cryptsetup_options
+exec mount $opt_s $opt_f $opt_n $opt_v $opt_N $opt_o "/dev/mapper/$mapper" "$mountpoint"
