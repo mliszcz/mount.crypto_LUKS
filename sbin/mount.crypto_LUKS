@@ -9,6 +9,7 @@ then
   exit 1
 fi
 
+suffix="${0##*.}"
 device="$1"
 mountpoint="$2"
 shift 2
@@ -36,6 +37,7 @@ mapper="${device//\//_}"
 oldifs=$IFS
 IFS=,
 cryptsetup_options=
+opt_o="-o helper=$suffix"
 for v in $options
 do
   if [ "$v" != "${v#cryptsetup=}" ]
@@ -46,14 +48,6 @@ do
   fi
 done
 IFS=$oldifs
-
-# Strip the leading comma (due to appending to an empty string).
-opt_o="${opt_o#?}"
-
-if [ -n "$opt_o" ]
-then
-  opt_o="-o $opt_o"
-fi
 
 # TODO: Run cryptsetup with changed GID/UID.
 # TODO: Close LUKS container if mount fails.
