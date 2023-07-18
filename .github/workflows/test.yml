@@ -1,0 +1,16 @@
+name: test
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+
+jobs:
+  shellspec:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.18
+    steps:
+      - run: apk add --no-cache wget git
+      - uses: actions/checkout@v3
+      - run: wget -O- https://git.io/shellspec | sh -s -- 0.28.1 -p /usr/local -y
+      - run: shellspec
