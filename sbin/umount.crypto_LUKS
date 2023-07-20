@@ -1,0 +1,49 @@
+#!/bin/sh
+# vim: set ft=sh:
+set -e
+set -u
+
+if [ "$#" -lt 1 ]
+then
+  # The interface is specified in umount(8) manual, EXTERNAL HELPERS section.
+  echo "usage: $0 {directory|device} [-flnrv] [-N namespace] [-t type.subtype]"
+  exit 1
+fi
+
+mountpoint_or_device="$1"
+shift 1
+
+opt_f=
+opt_l=
+opt_n=
+opt_r=
+opt_v=
+opt_N=
+# shellcheck disable=SC2034
+opt_t=
+while getopts flnrvN:t: name
+do
+  case $name in
+    f|l|n|r|v) eval "opt_$name='-$name'";;
+    N|t) eval "opt_$name='-$name $OPTARG'";;
+    ?) exit 1
+  esac
+done
+
+if [ -f "$mountpoint_or_device" ]
+then
+  # Mapper device file (or disk block device?).
+  echo "Unmounting through file is not supported"
+  exit 1
+elif [ -d "$mountpoint_or_device" ]
+then
+  # Mountpoint provided.
+  mapper="$(findmnt -n -o SOURCE "$mountpoint_or_device")"
+else
+  exit 1
+fi
+
+# Call umount with -i to prevent helper usage (which would result in a loop).
+# shellcheck disable=SC2086
+umount -i $opt_f $opt_l $opt_n $opt_r $opt_v $opt_N "$mountpoint_or_device"
+exec cryptsetup close "$mapper"
