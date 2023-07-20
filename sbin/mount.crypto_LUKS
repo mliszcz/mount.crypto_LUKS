@@ -1,6 +1,7 @@
 #!/bin/sh
 # vim: set ft=sh:
 set -e
+set -u
 
 if [ "$#" -lt 2 ]
 then
@@ -20,6 +21,7 @@ opt_n=
 opt_v=
 opt_N=
 opt_o=
+# shellcheck disable=SC2034
 opt_t=
 options=
 while getopts sfnvN:o:t: name
@@ -32,7 +34,7 @@ do
   esac
 done
 
-mapper="${device//\//_}"
+mapper="$(echo "$device" | tr / _)"
 
 oldifs=$IFS
 IFS=,
@@ -51,6 +53,7 @@ IFS=$oldifs
 
 # TODO: Run cryptsetup with changed GID/UID.
 # TODO: Close LUKS container if mount fails.
-# TODO: Configure helper in /etc/mtab for umount.
+# shellcheck disable=SC2086
 cryptsetup luksOpen "$device" "$mapper" $cryptsetup_options
+# shellcheck disable=SC2086
 exec mount $opt_s $opt_f $opt_n $opt_v $opt_N $opt_o "/dev/mapper/$mapper" "$mountpoint"

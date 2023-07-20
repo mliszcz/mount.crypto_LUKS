@@ -5,6 +5,18 @@ on:
   push:
 
 jobs:
+  shellcheck:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.18
+    steps:
+      - run: apk add --no-cache wget tar xz git
+      - uses: actions/checkout@v3
+      - run: >
+          wget -O-
+          https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz
+          | tar xJ --strip-components=1 --wildcards -C /usr/local/bin '*/shellcheck'
+      - run: shellcheck sbin/*
   shellspec:
     runs-on: ubuntu-latest
     container:
