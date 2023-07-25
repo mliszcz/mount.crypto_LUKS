@@ -16,7 +16,7 @@ jobs:
           wget -O-
           https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz
           | tar xJ --strip-components=1 --wildcards -C /usr/local/bin '*/shellcheck'
-      - run: shellcheck sbin/*
+      - run: shellcheck sbin/* spec/* test/*
   shellspec:
     runs-on: ubuntu-latest
     container:
@@ -26,3 +26,14 @@ jobs:
       - uses: actions/checkout@v3
       - run: wget -O- https://git.io/shellspec | sh -s -- 0.28.1 -p /usr/local -y
       - run: shellspec
+  integration:
+    runs-on: ubuntu-latest
+    container:
+      image: alpine:3.18
+      options: --privileged
+    steps:
+      - run: apk add --no-cache wget git e2fsprogs cryptsetup util-linux
+      - uses: actions/checkout@v3
+      - run: ln -s "$(pwd)/sbin/"* /sbin
+      - run: wget -O- https://git.io/shellspec | sh -s -- 0.28.1 -p /usr/local -y
+      - run: test/integration.sh

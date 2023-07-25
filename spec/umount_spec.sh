@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 umount="./sbin/umount.crypto_LUKS"
 
 Mock umount

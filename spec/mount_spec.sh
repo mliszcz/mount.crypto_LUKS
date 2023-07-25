@@ -1,3 +1,4 @@
+# shellcheck shell=sh
 mount="./sbin/mount.crypto_LUKS"
 helper="helper=crypto_LUKS"
 
