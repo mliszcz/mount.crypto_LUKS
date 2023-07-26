@@ -46,4 +46,4 @@ fi
 # Call umount with -i to prevent helper usage (which would result in a loop).
 # shellcheck disable=SC2086
 umount -i $opt_f $opt_l $opt_n $opt_r $opt_v $opt_N "$mountpoint_or_device"
-exec cryptsetup close "$mapper"
+cryptsetup close "$mapper"

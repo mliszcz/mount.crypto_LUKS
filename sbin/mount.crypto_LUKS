@@ -52,8 +52,18 @@ done
 IFS=$oldifs
 
 # TODO: Run cryptsetup with changed GID/UID.
-# TODO: Close LUKS container if mount fails.
+
 # shellcheck disable=SC2086
 cryptsetup luksOpen "$device" "$mapper" $cryptsetup_options
+
+set +e  # Allow failure in mount. We need to close the mapper.
 # shellcheck disable=SC2086
-exec mount $opt_s $opt_f $opt_n $opt_v $opt_N $opt_o "/dev/mapper/$mapper" "$mountpoint"
+mount $opt_s $opt_f $opt_n $opt_v $opt_N $opt_o "/dev/mapper/$mapper" "$mountpoint"
+mount_exit_code=$?
+set -e
+
+if [ $mount_exit_code -ne 0 ]
+then
+  cryptsetup close "$mapper"
+fi
+exit $mount_exit_code
