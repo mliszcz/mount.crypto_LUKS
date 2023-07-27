@@ -22,6 +22,11 @@ Mock cryptsetup
   %preserve crypt_args_1
 End
 
+Mock setpriv
+  setpriv_args="$*"
+  %preserve setpriv_args
+End
+
 Describe 'mount'
 
   setup()
@@ -31,6 +36,7 @@ Describe 'mount'
     crypt_args=''
     crypt_args_0=''
     crypt_args_1=''
+    setpriv_args=''
   }
 
   BeforeEach 'setup'
@@ -73,6 +79,13 @@ Describe 'mount'
     The value "$mount_args" should eq "-o $helper /dev/mapper/_dev_sda1 /mnt/data"
     The value "$crypt_args_1" should eq 'luksOpen /dev/sda1 _dev_sda1'
     The value "$crypt_args_0" should eq "close _dev_sda1"
+  End
+
+  It 'accesses the keyfile if requested'
+    When run "$mount" /dev/sda1 /mnt/data -o access-keyfile=100:200:/key/file
+    The value "$crypt_args" should eq 'luksOpen /dev/sda1 _dev_sda1'
+    The value "$mount_args" should eq "-o $helper /dev/mapper/_dev_sda1 /mnt/data"
+    The value "$setpriv_args" should eq '--reuid 100 --regid 200 --keep-groups --reset-env ls /key/file'
   End
 
 End

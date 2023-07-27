@@ -30,7 +30,7 @@ do
     s|f|n|v) eval "opt_$name='-$name'";;
     N|t) eval "opt_$name='-$name $OPTARG'";;
     o) options="$OPTARG";;
-    ?) exit 1
+    ?) exit 1;;
   esac
 done
 
@@ -39,19 +39,27 @@ mapper="$(echo "$device" | tr / _)"
 oldifs=$IFS
 IFS=,
 cryptsetup_options=
+access_keyfile=
 opt_o="-o helper=$suffix"
 for v in $options
 do
-  if [ "$v" != "${v#cryptsetup=}" ]
-  then
-    cryptsetup_options="${v#cryptsetup=}"
-  else
-    opt_o="$opt_o,$v"
-  fi
+  case "$v" in
+    cryptsetup=*) cryptsetup_options="${v#cryptsetup=}";;
+    access-keyfile=*) access_keyfile="${v#access-keyfile=}";;
+    *) opt_o="$opt_o,$v";;
+  esac
 done
 IFS=$oldifs
 
-# TODO: Run cryptsetup with changed GID/UID.
+# Access the keyfile as a different user if needed.
+# This is required to work-around autofs limitation.
+if [ -n "$access_keyfile" ]
+then
+  IFS=: read -r reuid regid keyfile <<EOF
+$access_keyfile
+EOF
+  setpriv --reuid "$reuid" --regid "$regid" --keep-groups --reset-env ls "$keyfile"
+fi
 
 # shellcheck disable=SC2086
 cryptsetup luksOpen "$device" "$mapper" $cryptsetup_options

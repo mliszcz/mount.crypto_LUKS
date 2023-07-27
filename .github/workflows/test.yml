@@ -33,6 +33,11 @@ jobs:
       options: --privileged
     steps:
       - run: apk add --no-cache wget git e2fsprogs cryptsetup util-linux
+      # Remove the busybox setpriv. It hides the one from util-linux (/usr/bin)
+      # as the $PATH order is different. Changing the shebang to run the helper
+      # using a login shell also fixes the problem. Note that this removal must
+      # be done after 'apk add' call.
+      - run: rm /bin/setpriv
       - uses: actions/checkout@v3
       - run: ln -s "$(pwd)/sbin/"* /sbin
       - run: wget -O- https://git.io/shellspec | sh -s -- 0.28.1 -p /usr/local -y

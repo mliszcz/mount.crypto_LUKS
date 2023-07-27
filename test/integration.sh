@@ -20,6 +20,7 @@ set -v
 printf "\033[1;33m==== SET UP ====\033[0m\n"
 
 tmpd="$(mktemp -d --tmpdir 'mount.crypto_LUKS.XXXXXX')"
+chmod 755 "$tmpd"  # Required for keyfile access after changing UID/GID.
 
 disk="$tmpd/disk.img"
 keyfile="$tmpd/keyfile"
@@ -45,7 +46,9 @@ printf "\033[1;33m==== TEST ====\033[0m\n"
 loopdev="$(losetup --show --find "$disk")"
 real_mapper="$(echo "$loopdev" | tr / _)"  # Must match the implementation.
 
-mount --mkdir -o "cryptsetup=--key-file=$keyfile" "$loopdev" "$tmpd/mnt"
+mount --mkdir \
+  -o "cryptsetup=--key-file=$keyfile,access-keyfile=1000:1000:$keyfile" \
+  "$loopdev" "$tmpd/mnt"
 
 (set -x; test "$content" == "$(cat "$tmpd/mnt/file")")
 
