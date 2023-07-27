@@ -7,7 +7,9 @@ export mount_exit_code=0
 Mock mount
   mount_args="$*"
   %preserve mount_args
-  exit $mount_exit_code 
+  # Exit from eval to hide this from shellcheck.
+  # Otherwise the rest of this file is unreachable.
+  eval "exit $mount_exit_code"
 End
 
 
